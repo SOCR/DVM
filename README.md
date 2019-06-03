@@ -9,7 +9,7 @@ Table of contents
 <!--ts-->
    * [Table of contents](#table-of-contents)
    * [Overview](#overview)
-   * [R Code](#python-code)
+   * [Python Code](#python-code)
    * [Team](#team)
    * [Acknowledgments](#acknowledgments)
    * [References](#references)
