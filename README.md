@@ -29,7 +29,7 @@ DVM is an [open science proejct](https://en.wikipedia.org/wiki/Open_science) and
 Team
 ====
 
-[Ivo D. Dinov](http://umich.edu/~dinov), Morteza Noshad, Yuming Sun, and Jerome Choi.
+[Ivo D. Dinov](http://umich.edu/~dinov), Morteza Noshad, Jerome Choi and Yuming Sun.
 
 Acknowledgments
 ===============
