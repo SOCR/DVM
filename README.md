@@ -10,6 +10,7 @@ Table of contents
    * [Table of contents](#table-of-contents)
    * [Overview](#overview)
    * [Python Code](#python-code)
+   * [Experimental results](#experimental-results)
    * [Team](#team)
    * [Acknowledgments](#acknowledgments)
    * [References](#references)
@@ -24,7 +25,12 @@ Thi [SOCR](https://SOCR.umich.edu) project is focused on developing a new measur
 Python Code
 ===========
 
-DVM is an [open science proejct](https://en.wikipedia.org/wiki/Open_science) and provides the complete python code, case studies, examples, simulations, and results under LGPL license. Details are in the [code folder](https://github.com/SOCR/DVM/tree/master/code).
+DVM is an [open science project](https://en.wikipedia.org/wiki/Open_science) and provides the complete python code, case studies, examples, simulations, and results under LGPL license. Details are in the [code folder](https://github.com/SOCR/DVM/tree/master/code).
+
+Experimental results
+====================
+
+Interactive [2D and 3D DVM surface plots illustrating the results of several experiment are available online](http://socr.umich.edu/docs/uploads/2020/DVM/). These graphs show the behavior of the DVM metric spanning the domain of possible number of cases and number of features for the real and simulated datasets.
 
 Team
 ====
@@ -39,5 +45,5 @@ This work is supported in part by NIH grants [P20 NR015331](www.socr.umich.edu/C
 References
 ==========
 
-* pending ...
+* Noshad, M, Choi, J, Sun, Y, Hero, A, Dinov, ID. (2020) "A Data Value Metric for Quantifying the Information Content and Utility of Big Data Sets", *pending*.
 
