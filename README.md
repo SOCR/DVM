@@ -6,7 +6,7 @@
 Table of contents
 =================
 
-<!--ts-->
+<!--tc-->
    * [Table of contents](#table-of-contents)
    * [Overview](#overview)
    * [Python Code](#python-code)
@@ -14,13 +14,13 @@ Table of contents
    * [Team](#team)
    * [Acknowledgments](#acknowledgments)
    * [References](#references)
-<!--te-->
+<!--tc-->
 
 
 Overview
 ========
 
-Thi [SOCR](https://SOCR.umich.edu) project is focused on developing a new measure, called *Data Value Metric (DVM)*, that quantifies the energy, or information content, of large and complex datasets, which can be used as an yardstick to determine if appending, expanding, or otherwise augmenting the data size or complexity may be beneficial in specific application domains.
+This [SOCR](https://SOCR.umich.edu) project is focused on developing a new measure, called *Data Value Metric (DVM)*, that quantifies the energy, or information content, of large and complex datasets, which can be used as a yardstick to determine if appending, expanding, or otherwise augmenting the data size or complexity may be beneficial in specific application domains.
 
 Python Code
 ===========
