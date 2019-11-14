@@ -25,7 +25,7 @@ Thi [SOCR](https://SOCR.umich.edu) project is focused on developing a new measur
 Python Code
 ===========
 
-DVM is an [open science project](https://en.wikipedia.org/wiki/Open_science) and provides the complete python code, case studies, examples, simulations, and results under LGPL license. Details are in the [code folder](https://github.com/SOCR/DVM/tree/master/code).
+DVM is an [open science project](https://en.wikipedia.org/wiki/Open_science) and provides the complete python code, case studies, examples, simulations, and results under LGPL license. Details are in the [code folder](https://github.com/SOCR/DVM/tree/master/DVM_v2).
 
 Experimental results
 ====================
