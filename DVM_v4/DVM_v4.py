@@ -228,7 +228,7 @@ def plot_DVM(X, Y=None,X_continuous = False,Y_continuous = False,
                              Y_continuous = Y_continuous, problem_type = problem_type,
                              GiveAccuracy=GiveAccuracy,**kwarg)
                 if Y_continuous == False:
-                    BER_sample[sample_id,] = ensemble_bg_estimator(X_sub, Y_sub)
+                    BER_sample[sample_id,] = 1 - np.maximum(0.0,ensemble_bg_estimator(X_sub, Y_sub,h_range = [0.95,1.25]))
             if problem_type == 'unsupervised':
                 X_sub =X[I_s,:]
                 X_sub =X_sub[:,I_f]
@@ -261,7 +261,7 @@ def plot_DVM(X, Y=None,X_continuous = False,Y_continuous = False,
                              Y_continuous = Y_continuous, problem_type = problem_type,
                              GiveAccuracy=GiveAccuracy,**kwarg)
                 if Y_continuous == False:
-                    BER_feature[feature_id,] = ensemble_bg_estimator(X_sub, Y_sub)
+                    BER_feature[feature_id,] = 1 - np.maximum(0.0,ensemble_bg_estimator(X_sub, Y_sub,h_range = [0.95,1.25]))
             if problem_type == 'unsupervised':
                 X_sub =X[I_s,:]
                 X_sub =X_sub[:,I_f]
@@ -290,11 +290,11 @@ def plot_DVM(X, Y=None,X_continuous = False,Y_continuous = False,
         trace2D_sample_BER = go.Scatter(x = sample_seq,
                     y = BER_sample,
                     mode = 'lines',
-                    name = 'Bayes Error Rate')
+                    name = 'Bayes Accuracy Rate')
         trace2D_feature_BER = go.Scatter(x = feature_seq,
                     y = BER_feature,
                     mode = 'lines',
-                    name = 'Bayes Error Rate')
+                    name = 'Bayes Accuracy Rate')
         trace2D_feature_DVM = go.Scatter(x = feature_seq,
                        y = DVM_value_feature,
                        mode = 'lines',
@@ -328,10 +328,10 @@ def plot_DVM(X, Y=None,X_continuous = False,Y_continuous = False,
                         mode = 'lines',
                         name = 'Accuracy')
             layout2D_sample = go.Layout(
-                    title = go.layout.Title(x=0.5,text = 'DVM, Bayes Error Rate and Accuracy vs. Number of Features',xanchor="center"),
+                    title = go.layout.Title(x=0.5,text = 'DVM, Bayes Accuracy Rate and Accuracy vs. Number of Features',xanchor="center"),
                     xaxis = go.layout.XAxis(title = go.layout.xaxis.Title(text = "Number of Samples",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                             tickfont = dict(size = 20)),
-                    yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM, Bayes Error Rate, Accuracy",font = dict(size=25)),gridcolor='rgb(230,230,230)',
+                    yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM, Bayes Accuracy Rate, Accuracy",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                             tickfont = dict(size = 20)),
                     plot_bgcolor = 'rgb(255,255,255,0)')
             trace2D_feature_Accuracy = go.Scatter(x = feature_seq,
@@ -339,26 +339,26 @@ def plot_DVM(X, Y=None,X_continuous = False,Y_continuous = False,
                         mode = 'lines',
                         name = 'Accuracy')
             layout2D_feature = go.Layout(
-                title = go.layout.Title(x=0.5,text = 'DVM, Bayes Error Rate and Accuracy vs. Number of Features',xanchor="center"),
+                title = go.layout.Title(x=0.5,text = 'DVM, Bayes Accuracy Rate and Accuracy vs. Number of Features',xanchor="center"),
                 xaxis = go.layout.XAxis(title = go.layout.xaxis.Title(text = "Number of Features",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                         tickfont = dict(size = 20)),
-                yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM, Bayes Error Rate, Accuracy",font = dict(size=25)),gridcolor='rgb(230,230,230)',
+                yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM, Bayes Accuracy Rate, Accuracy",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                         tickfont = dict(size = 20)),
                 plot_bgcolor = 'rgb(255,255,255,0)')
         
         if Y_continuous == False:
             layout2D_sample_NoAccuracy = go.Layout(
-                    title = go.layout.Title(x=0.5,text = 'DVM and Bayes Error Rate vs. Number of Samples',xanchor="center"),
+                    title = go.layout.Title(x=0.5,text = 'DVM and Bayes Accuracy Rate vs. Number of Samples',xanchor="center"),
                     xaxis = go.layout.XAxis(title = go.layout.xaxis.Title(text = "Number of Samples",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                             tickfont = dict(size = 20)),
-                    yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM & Bayes Error Rate",font = dict(size=25)),gridcolor='rgb(230,230,230)',
+                    yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM & Bayes Accuracy Rate",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                             tickfont = dict(size = 20)),
                     plot_bgcolor = 'rgb(255,255,255,0)')
             layout2D_feature_NoAccuracy = go.Layout(
-                    title = go.layout.Title(x=0.5,text = 'DVM and Bayes Error Rate vs. Number of Features',xanchor="center"),
+                    title = go.layout.Title(x=0.5,text = 'DVM and Bayes Accuracy Rate vs. Number of Features',xanchor="center"),
                     xaxis = go.layout.XAxis(title = go.layout.xaxis.Title(text = "Number of Features",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                             tickfont = dict(size = 20)),
-                    yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM & Bayes Error Rate",font = dict(size=25)),gridcolor='rgb(230,230,230)',
+                    yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM & Bayes Accuracy Rate",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                             tickfont = dict(size = 20)),
                     plot_bgcolor = 'rgb(255,255,255,0)')
         else:
@@ -439,7 +439,7 @@ def plot_DVM(X, Y=None,X_continuous = False,Y_continuous = False,
                                  method=method,X_continuous = X_continuous,
                                  Y_continuous = Y_continuous, problem_type = problem_type,
                                  GiveAccuracy=GiveAccuracy,**kwarg)
-                    BER[MI_row_id, MI_col_id] = ensemble_bg_estimator(X_sub,Y_sub)
+                    BER[MI_row_id, MI_col_id] = 1 - np.maximum(0.0,ensemble_bg_estimator(X_sub,Y_sub,h_range = [0.95,1.25]))
                 if problem_type == 'unsupervised':
                     X_sub =X[I_s,:]
                     X_sub =X_sub[:,I_f]
@@ -537,7 +537,7 @@ def plot_DVM(X, Y=None,X_continuous = False,Y_continuous = False,
                 scene = dict (
                 xaxis = dict(title = "Number of Features",titlefont=dict(size=17),gridcolor='rgb(230, 230, 230)',backgroundcolor='rgb(255, 255,255)'),
                 yaxis = dict(title = "Number of Samples",titlefont=dict(size=17),gridcolor='rgb(230, 230, 230)',backgroundcolor='rgb(255, 255,255)'),
-                zaxis = dict(title = "DVM, Bayes Error Rate, Accuracy",titlefont = dict(size=17),gridcolor='rgb(230, 230, 230)',backgroundcolor='rgb(255, 255,255)'),
+                zaxis = dict(title = "DVM, Bayes Accuracy Rate, Accuracy",titlefont = dict(size=17),gridcolor='rgb(230, 230, 230)',backgroundcolor='rgb(255, 255,255)'),
                 ),)
             trace2D_sample_Accuracy = go.Scatter(x = sample_seq,
                         y = Accuracy[:,-1],
@@ -546,12 +546,12 @@ def plot_DVM(X, Y=None,X_continuous = False,Y_continuous = False,
             trace2D_sample_BER = go.Scatter(x = sample_seq,
                         y = BER[:,-1],
                         mode = 'lines',
-                        name = 'Bayes Error Rate')
+                        name = 'Bayes Accuracy Rate')
             layout2D_sample = go.Layout(
-                    title = go.layout.Title(x=0.5,text = 'DVM, Bayes Error Rate and Accuracy vs. Number of Samples',xanchor="center"),
+                    title = go.layout.Title(x=0.5,text = 'DVM, Bayes Accuracy Rate and Accuracy vs. Number of Samples',xanchor="center"),
                     xaxis = go.layout.XAxis(title = go.layout.xaxis.Title(text = "Number of Samples",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                             tickfont = dict(size = 20)),
-                    yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM, Bayes Error Rate, Accuracy",font = dict(size=25)),gridcolor='rgb(230,230,230)',
+                    yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM, Bayes Accuracy Rate, Accuracy",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                             tickfont = dict(size = 20)),
                     plot_bgcolor = 'rgb(255,255,255,0)')
             trace2D_feature_Accuracy = go.Scatter(x = feature_seq,
@@ -561,12 +561,12 @@ def plot_DVM(X, Y=None,X_continuous = False,Y_continuous = False,
             trace2D_feature_BER = go.Scatter(x = feature_seq,
                         y = BER[-1,:],
                         mode = 'lines',
-                        name = 'Bayes Error Rate')
+                        name = 'Bayes Accuracy Rate')
             layout2D_feature = go.Layout(
-                title = go.layout.Title(x=0.5,text = 'DVM, Bayes Error Rate and Accuracy vs. Number of Features',xanchor="center"),
+                title = go.layout.Title(x=0.5,text = 'DVM, Bayes Accuracy Rate and Accuracy vs. Number of Features',xanchor="center"),
                 xaxis = go.layout.XAxis(title = go.layout.xaxis.Title(text = "Number of Features",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                         tickfont = dict(size = 20)),
-                yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM, Bayes Error Rate, Accuracy",font = dict(size=25)),gridcolor='rgb(230,230,230)',
+                yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM, Bayes Accuracy Rate, Accuracy",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                         tickfont = dict(size = 20)),
                 plot_bgcolor = 'rgb(255,255,255,0)')
 
@@ -586,7 +586,7 @@ def plot_DVM(X, Y=None,X_continuous = False,Y_continuous = False,
         my_text4 = my_text4.astype('<U59')
         for i in range(sample_len):
             for j in range(feature_len):
-                my_text4[i,j] = 'Sample: ' + sample_seq_v[i,j] + '<br>' + 'Feature: ' + feature_seq_v[i,j] + '<br>' +'Bayes Error Rate: ' + my_text4[i,j]
+                my_text4[i,j] = 'Sample: ' + sample_seq_v[i,j] + '<br>' + 'Feature: ' + feature_seq_v[i,j] + '<br>' +'Bayes Accuracy Rate: ' + my_text4[i,j]
         trace3D_BER = go.Surface(x = feature_seq,y = sample_seq, z=BER,text = my_text4,
                                  hoverinfo = 'text',
                                  colorscale='RdBu',showscale = False,name = 'BER')
@@ -624,19 +624,19 @@ def plot_DVM(X, Y=None,X_continuous = False,Y_continuous = False,
                     scene = dict (
                     xaxis = dict(title = "Number of Features",titlefont=dict(size=17),gridcolor='rgb(230, 230, 230)',backgroundcolor='rgb(255, 255,255)'),
                     yaxis = dict(title = "Number of Samples",titlefont=dict(size=17),gridcolor='rgb(230, 230, 230)',backgroundcolor='rgb(255, 255,255)'),
-                    zaxis = dict(title = "DVM & Bayes Error Rate",titlefont = dict(size=17),gridcolor='rgb(230, 230, 230)',backgroundcolor='rgb(255, 255,255)'),),)
+                    zaxis = dict(title = "DVM & Bayes Accuracy Rate",titlefont = dict(size=17),gridcolor='rgb(230, 230, 230)',backgroundcolor='rgb(255, 255,255)'),),)
             layout2D_sample_NoAccuracy = go.Layout(
-                title = go.layout.Title(x=0.5,text = 'DVM and Bayes Error Rate vs. Number of Samples',xanchor="center"),
+                title = go.layout.Title(x=0.5,text = 'DVM and Bayes Accuracy Rate vs. Number of Samples',xanchor="center"),
                 xaxis = go.layout.XAxis(title = go.layout.xaxis.Title(text = "Number of Samples",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                         tickfont = dict(size = 20)),
-                yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM & Bayes Error Rate",font = dict(size=25)),gridcolor='rgb(230,230,230)',
+                yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM & Bayes Accuracy Rate",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                         tickfont = dict(size = 20)),
                 plot_bgcolor = 'rgb(255,255,255,0)')
             layout2D_feature_NoAccuracy = go.Layout(
-                title = go.layout.Title(x=0.5,text = 'DVM and Bayes Error Rate vs. Feature Number',xanchor="center"),
+                title = go.layout.Title(x=0.5,text = 'DVM and Bayes Accuracy Rate vs. Feature Number',xanchor="center"),
                 xaxis = go.layout.XAxis(title = go.layout.xaxis.Title(text = "Number of Features",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                         tickfont = dict(size = 20)),
-                yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM & Bayes Error Rate",font = dict(size=25)),gridcolor='rgb(230,230,230)',
+                yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM & Bayes Accuracy Rate",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                         tickfont = dict(size = 20)),
                 plot_bgcolor = 'rgb(255,255,255,0)')
 
@@ -691,4 +691,4 @@ def plot_DVM(X, Y=None,X_continuous = False,Y_continuous = False,
         return {"Accuracy":Accuracy,"MI":MI,"Complexity" : Complexity,"DVM":DVM_value,
                 "Sample Number":sample_seq, "Feature Number":feature_seq,
                 "Confidence band":confidence_band,"I1":I1_matrix,"I2":I2_matrix,"I3":I3_matrix,
-                "Bayes Error Rate":BER}
+                "Bayes Accuracy Rate":BER}
