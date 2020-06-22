@@ -146,35 +146,32 @@ def DVM(X, Y=None, T=10, alpha= 0.1, beta=0.1,
                 else:
                     method_accuracy[i] = mean_squared_error(Y[I_test],Z)
         
-        
-    accuracy = np.mean(MI_score)
-    ## Theoretical computational complexity
-    #complexity = n_neighbors* N * math.log(N)* 10**(-5)
-    complexity = np.mean(method_runtime)
-    #beta = 1
-    DVM= accuracy - alpha*complexity/num_sample
+    DVM_vec = MI_score - alpha*method_runtime/num_sample
+    DVM = np.mean(DVM_vec)
     DVM = min(max(0,DVM),1)
+    accuracy = np.mean(MI_score)
+    
     model_accuracy = np.mean(method_accuracy)
     I1 = np.mean(I1_array)
     I2 = np.mean(I2_array)
     I3 = np.mean(I3_array)
     
     q = 5
-    percentile_upper = np.percentile(MI_score, q)
-    percentile_lower = np.percentile(MI_score, 100-q)
-    Upper_std = percentile_lower - accuracy
-    Lower_std = accuracy - percentile_upper 
+    percentile_upper = np.percentile(DVM_vec, q)
+    percentile_lower = np.percentile(DVM_vec, 100-q)
+    Upper_std = percentile_lower - DVM
+    Lower_std = DVM - percentile_upper
     confidence_band = (-percentile_upper+percentile_lower)/2.0
     
     return {"DVM": DVM, "Accuracy": model_accuracy, "MI":accuracy,
-            "Complexity":complexity,"Confidence Band":confidence_band,
+            "Complexity":np.mean(method_runtime),"Confidence Band":confidence_band,
             "Upper Std":Upper_std,"Lower Std":Lower_std,
             "I1":I1,"I2":I2,"I3":I3}
 
 # Data Value Metric Graph 
 def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
              sample_len = 10, feature_len = 10, 
-             sample_start = None,feature_start = None,
+             sample_start = None,feature_start = None,smooth = 1,
              T=10, alpha = 0.1, beta=1,sigma_x = 0, sigma_y = 0,method=None,
              filename = "tempo",problem_type='supervised',
              plot_type = '3D',GiveAccuracy = True,
@@ -254,7 +251,32 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
             Ub_sample[sample_id, ] = result["Upper Std"]
             Lb_sample[sample_id, ] = result["Lower Std"]
             sample_id += 1
-            
+        if smooth%2:
+            num1 = (smooth - 1)/2
+            num2 = (smooth - 1)/2
+        else:
+            num1 = smooth/2 - 1
+            num2 = smooth/2
+        
+        id1_sample = np.arange(num1)
+        id2_sample = sample_len - 1 - np.arange(num2)
+        id2_sample = id2_sample[::-1]
+        id1_sample = id1_sample.astype(int)
+        id2_sample = id2_sample.astype(int)
+        
+        DVM_value_sample_smooth = np.convolve(DVM_value_sample, np.ones((smooth,))/smooth, mode='valid')
+        Ub_sample_smooth = np.convolve(Ub_sample, np.ones((smooth,))/smooth, mode='valid')
+        Lb_sample_smooth = np.convolve(Lb_sample, np.ones((smooth,))/smooth, mode='valid')
+        
+        DVM_value_sample = np.concatenate((DVM_value_sample[id1_sample],
+                                           DVM_value_sample_smooth,
+                                           DVM_value_sample[id2_sample]))
+        Ub_sample = np.concatenate((Ub_sample[id1_sample],
+                                    Ub_sample_smooth,
+                                    Ub_sample[id2_sample]))
+        Lb_sample = np.concatenate((Lb_sample[id1_sample],
+                                    Lb_sample_smooth,
+                                    Lb_sample[id2_sample]))
         feature_id = 0
         for f in feature_seq:
             print('f in feature_seq: ', f)
@@ -289,6 +311,26 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
             Ub_feature[feature_id, ] = result["Upper Std"]
             Lb_feature[feature_id, ] = result["Lower Std"]
             feature_id += 1
+        
+        id1_feature = np.arange(num1)
+        id2_feature = feature_len - 1 - np.arange(num2)
+        id2_feature = id2_feature[::-1]
+        id1_feature = id1_feature.astype(int)
+        id2_feature = id2_feature.astype(int)
+        
+        DVM_value_feature_smooth = np.convolve(DVM_value_feature, np.ones((smooth,))/smooth, mode='valid')
+        Ub_feature_smooth = np.convolve(Ub_feature, np.ones((smooth,))/smooth, mode='valid')
+        Lb_feature_smooth = np.convolve(Lb_feature, np.ones((smooth,))/smooth, mode='valid')
+        
+        DVM_value_feature = np.concatenate((DVM_value_feature[id1_feature],
+                                           DVM_value_feature_smooth,
+                                           DVM_value_feature[id2_feature]))
+        Ub_feature = np.concatenate((Ub_feature[id1_feature],
+                                    Ub_feature_smooth,
+                                    Ub_feature[id2_feature]))
+        Lb_feature = np.concatenate((Lb_feature[id1_feature],
+                                    Lb_feature_smooth,
+                                    Lb_feature[id2_feature]))
         
         if Y_continuous == True:
             Accuracy_sample = Accuracy_sample/np.max(Accuracy_sample)
@@ -529,6 +571,53 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
         DVM_value = sp.ndimage.filters.gaussian_filter(DVM_value, sigma, mode='constant')
         Accuracy = sp.ndimage.filters.gaussian_filter(Accuracy, sigma, mode='constant')
         
+        if smooth%2:
+            num1 = (smooth - 1)/2
+            num2 = (smooth - 1)/2
+        else:
+            num1 = smooth/2 - 1
+            num2 = smooth/2
+            
+        id1_sample = np.arange(num1)
+        id2_sample = sample_len - 1 - np.arange(num2)
+        id2_sample = id2_sample[::-1]
+        id1_sample = id1_sample.astype(int)
+        id2_sample = id2_sample.astype(int)
+        
+        DVM_value_sample_smooth = np.convolve(DVM_value[:,-1], np.ones((smooth,))/smooth, mode='valid')
+        Ub_sample_smooth = np.convolve(Ub_DVM[:,-1], np.ones((smooth,))/smooth, mode='valid')
+        Lb_sample_smooth = np.convolve(Lb_DVM[:,-1], np.ones((smooth,))/smooth, mode='valid')
+        
+        DVM_value_sample = np.concatenate((DVM_value[id1_sample,-1],
+                                           DVM_value_sample_smooth,
+                                           DVM_value[id2_sample,-1]))
+        Ub_sample = np.concatenate((Ub_DVM[id1_sample,-1],
+                                    Ub_sample_smooth,
+                                    Ub_DVM[id2_sample,-1]))
+        Lb_sample = np.concatenate((Lb_DVM[id1_sample,-1],
+                                    Lb_sample_smooth,
+                                    Lb_DVM[id2_sample,-1]))
+        
+        id1_feature = np.arange(num1)
+        id2_feature = feature_len - 1 - np.arange(num2)
+        id2_feature = id2_feature[::-1]
+        id1_feature = id1_feature.astype(int)
+        id2_feature = id2_feature.astype(int)
+        
+        DVM_value_feature_smooth = np.convolve(DVM_value[-1,:], np.ones((smooth,))/smooth, mode='valid')
+        Ub_feature_smooth = np.convolve(Ub_DVM[-1,:], np.ones((smooth,))/smooth, mode='valid')
+        Lb_feature_smooth = np.convolve(Lb_DVM[-1,:], np.ones((smooth,))/smooth, mode='valid')
+        
+        DVM_value_feature = np.concatenate((DVM_value[-1,id1_feature],
+                                           DVM_value_feature_smooth,
+                                           DVM_value[-1,id2_feature]))
+        Ub_feature = np.concatenate((Ub_DVM[-1,id1_feature],
+                                    Ub_feature_smooth,
+                                    Ub_DVM[-1,id2_feature]))
+        Lb_feature = np.concatenate((Lb_DVM[-1,id1_feature],
+                                    Lb_feature_smooth,
+                                    Lb_DVM[-1,id2_feature]))
+        
         if Y_continuous == True:
             Accuracy = Accuracy/np.max(Accuracy)
         
@@ -657,15 +746,15 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                                  hoverinfo = 'text',
                                  colorscale='RdBu',showscale = False,name = 'BER')
         trace2D_sample_DVM = go.Scatter(x = sample_seq,
-                    y = DVM_value[:,-1],
+                    y = DVM_value_sample,
                     mode = 'lines',
                     name = 'DVM')
         trace2D_feature_DVM = go.Scatter(x = feature_seq,
-                        y = DVM_value[-1,:],
+                        y = DVM_value_feature,
                         mode = 'lines',
                         name = 'DVM')
         trace2D_sample_DVM_Ub = go.Scatter(x = sample_seq,
-                                       y = DVM_value[:,-1] + Ub_DVM[:,-1],
+                                       y = DVM_value_sample + Ub_sample,
                                        name = "95% CI Upper",
                                        mode = 'lines',
                                        marker=dict(color="#444"),
@@ -675,7 +764,7 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                                        showlegend=False)
         
         trace2D_sample_DVM_Lb = go.Scatter(x = sample_seq,
-                                       y = DVM_value[:,-1] - Lb_DVM[:,-1],
+                                       y = DVM_value_sample - Lb_sample,
                                        name = "95% CI Lower",
                                        mode = 'lines',
                                        marker=dict(color="#444"),
@@ -683,7 +772,7 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                                        showlegend=False)
         
         trace2D_feature_DVM_Ub = go.Scatter(x = feature_seq,
-                                       y = DVM_value[-1,:] + Ub_DVM[-1,:],
+                                       y = DVM_value_feature + Ub_feature,
                                        name = "95% CI Upper",
                                        mode = 'lines',
                                        marker=dict(color="#444"),
@@ -693,7 +782,7 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                                        showlegend=False)
         
         trace2D_feature_DVM_Lb = go.Scatter(x = feature_seq,
-                                       y = DVM_value[-1,:] - Lb_DVM[-1,:],
+                                       y = DVM_value_feature - Lb_feature,
                                        name = "95% CI Lower",
                                        mode = 'lines',
                                        marker=dict(color="#444"),
@@ -801,4 +890,4 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
         return {"Accuracy":Accuracy,"MI":MI,"Complexity" : Complexity,"DVM":DVM_value,
                 "Sample Number":sample_seq, "Feature Number":feature_seq,
                 "Confidence band":confidence_band,"I1":I1_matrix,"I2":I2_matrix,"I3":I3_matrix,
-                "Bayes Accuracy Rate":BER}
+                "Bayes Accuracy Rate":BER,"UB":Ub_DVM,"LB":Lb_DVM}
