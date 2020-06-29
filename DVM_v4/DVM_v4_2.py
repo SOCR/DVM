@@ -19,6 +19,7 @@ import scipy.ndimage
 from sklearn.metrics import mean_squared_error
 #import pickle
 from BER_estimator_KDtree import ensemble_bg_estimator
+from scipy.signal import savgol_filter
 
 # Data Value Metric 
 def DVM(X, Y=None, T=10, alpha= 0.1, beta=0.1, 
@@ -157,21 +158,19 @@ def DVM(X, Y=None, T=10, alpha= 0.1, beta=0.1,
     I3 = np.mean(I3_array)
     
     q = 5
-    percentile_upper = np.percentile(DVM_vec, q)
-    percentile_lower = np.percentile(DVM_vec, 100-q)
-    Upper_std = percentile_lower - DVM
-    Lower_std = DVM - percentile_upper
-    confidence_band = (-percentile_upper+percentile_lower)/2.0
+    percentile_lower = np.percentile(DVM_vec, q)
+    percentile_upper = np.percentile(DVM_vec, 100-q)
+    confidence_band = (percentile_upper-percentile_lower)/2.0
     
     return {"DVM": DVM, "Accuracy": model_accuracy, "MI":accuracy,
             "Complexity":np.mean(method_runtime),"Confidence Band":confidence_band,
-            "Upper Std":Upper_std,"Lower Std":Lower_std,
+            "Upper Percentile":percentile_upper,"Lower Percentile":percentile_lower,
             "I1":I1,"I2":I2,"I3":I3}
 
 # Data Value Metric Graph 
 def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
              sample_len = 10, feature_len = 10, 
-             sample_start = None,feature_start = None,smooth = 1,
+             sample_start = None,feature_start = None,window_len = 7,polyorder = 2,
              T=10, alpha = 0.1, beta=1,sigma_x = 0, sigma_y = 0,method=None,
              filename = "tempo",problem_type='supervised',
              plot_type = '3D',GiveAccuracy = True,
@@ -248,35 +247,13 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
             I1_sample[sample_id, ] = result["I1"]
             I2_sample[sample_id, ] = result["I2"]
             I3_sample[sample_id, ] = result["I3"]
-            Ub_sample[sample_id, ] = result["Upper Std"]
-            Lb_sample[sample_id, ] = result["Lower Std"]
+            Ub_sample[sample_id, ] = result["Upper Percentile"]
+            Lb_sample[sample_id, ] = result["Lower Percentile"]
             sample_id += 1
-        if smooth%2:
-            num1 = (smooth - 1)/2
-            num2 = (smooth - 1)/2
-        else:
-            num1 = smooth/2 - 1
-            num2 = smooth/2
         
-        id1_sample = np.arange(num1)
-        id2_sample = sample_len - 1 - np.arange(num2)
-        id2_sample = id2_sample[::-1]
-        id1_sample = id1_sample.astype(int)
-        id2_sample = id2_sample.astype(int)
-        
-        DVM_value_sample_smooth = np.convolve(DVM_value_sample, np.ones((smooth,))/smooth, mode='valid')
-        Ub_sample_smooth = np.convolve(Ub_sample, np.ones((smooth,))/smooth, mode='valid')
-        Lb_sample_smooth = np.convolve(Lb_sample, np.ones((smooth,))/smooth, mode='valid')
-        
-        DVM_value_sample = np.concatenate((DVM_value_sample[id1_sample],
-                                           DVM_value_sample_smooth,
-                                           DVM_value_sample[id2_sample]))
-        Ub_sample = np.concatenate((Ub_sample[id1_sample],
-                                    Ub_sample_smooth,
-                                    Ub_sample[id2_sample]))
-        Lb_sample = np.concatenate((Lb_sample[id1_sample],
-                                    Lb_sample_smooth,
-                                    Lb_sample[id2_sample]))
+        DVM_value_sample = savgol_filter(DVM_value_sample, window_len, polyorder)
+        Ub_sample = savgol_filter(Ub_sample, window_len, polyorder)
+        Lb_sample = savgol_filter(Lb_sample, window_len, polyorder)
         feature_id = 0
         for f in feature_seq:
             print('f in feature_seq: ', f)
@@ -308,29 +285,13 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
             I1_feature[feature_id, ] = result["I1"]
             I2_feature[feature_id, ] = result["I2"]
             I3_feature[feature_id, ] = result["I3"]
-            Ub_feature[feature_id, ] = result["Upper Std"]
-            Lb_feature[feature_id, ] = result["Lower Std"]
+            Ub_feature[feature_id, ] = result["Upper Percentile"]
+            Lb_feature[feature_id, ] = result["Lower Percentile"]
             feature_id += 1
         
-        id1_feature = np.arange(num1)
-        id2_feature = feature_len - 1 - np.arange(num2)
-        id2_feature = id2_feature[::-1]
-        id1_feature = id1_feature.astype(int)
-        id2_feature = id2_feature.astype(int)
-        
-        DVM_value_feature_smooth = np.convolve(DVM_value_feature, np.ones((smooth,))/smooth, mode='valid')
-        Ub_feature_smooth = np.convolve(Ub_feature, np.ones((smooth,))/smooth, mode='valid')
-        Lb_feature_smooth = np.convolve(Lb_feature, np.ones((smooth,))/smooth, mode='valid')
-        
-        DVM_value_feature = np.concatenate((DVM_value_feature[id1_feature],
-                                           DVM_value_feature_smooth,
-                                           DVM_value_feature[id2_feature]))
-        Ub_feature = np.concatenate((Ub_feature[id1_feature],
-                                    Ub_feature_smooth,
-                                    Ub_feature[id2_feature]))
-        Lb_feature = np.concatenate((Lb_feature[id1_feature],
-                                    Lb_feature_smooth,
-                                    Lb_feature[id2_feature]))
+        DVM_value_feature = savgol_filter(DVM_value_feature, window_len, polyorder)
+        Ub_feature = savgol_filter(Ub_feature, window_len, polyorder)
+        Lb_feature = savgol_filter(Lb_feature, window_len, polyorder)
         
         if Y_continuous == True:
             Accuracy_sample = Accuracy_sample/np.max(Accuracy_sample)
@@ -357,7 +318,7 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                        #fillcolor='rgba(68, 68, 68, 0.3)',
                        #fill='tonexty')
         trace2D_sample_DVM_Ub = go.Scatter(x = sample_seq,
-                                       y = DVM_value_sample + Ub_sample,
+                                       y = Ub_sample,
                                        name = "95% CI Upper",
                                        mode = 'lines',
                                        marker=dict(color="#444"),
@@ -367,7 +328,7 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                                        showlegend=False)
         
         trace2D_sample_DVM_Lb = go.Scatter(x = sample_seq,
-                                       y = DVM_value_sample - Lb_sample,
+                                       y = Lb_sample,
                                        name = "95% CI Lower",
                                        mode = 'lines',
                                        marker=dict(color="#444"),
@@ -375,7 +336,7 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                                        showlegend=False)
         
         trace2D_feature_DVM_Ub = go.Scatter(x = feature_seq,
-                                       y = DVM_value_feature + Ub_feature,
+                                       y = Ub_feature,
                                        name = "95% CI Upper",
                                        mode = 'lines',
                                        marker=dict(color="#444"),
@@ -385,7 +346,7 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                                        showlegend=False)
         
         trace2D_feature_DVM_Lb = go.Scatter(x = feature_seq,
-                                       y = DVM_value_feature - Lb_feature,
+                                       y = Lb_feature,
                                        name = "95% CI Lower",
                                        mode = 'lines',
                                        marker=dict(color="#444"),
@@ -402,7 +363,7 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                     xaxis = go.layout.XAxis(title = go.layout.xaxis.Title(text = "Number of Samples",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                             tickfont = dict(size = 20)),
                     yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM & MSE",font = dict(size=25)),gridcolor='rgb(230,230,230)',
-                                            tickfont = dict(size = 20)),
+                                            tickfont = dict(size = 20),range = [0,1]),
                     plot_bgcolor = 'rgb(255,255,255,0)')
              trace2D_feature_Accuracy = go.Scatter(x = feature_seq,
                         y = Accuracy_feature,
@@ -413,7 +374,7 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                 xaxis = go.layout.XAxis(title = go.layout.xaxis.Title(text = "Number of Features",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                         tickfont = dict(size = 20)),
                 yaxis =  go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM & MSE",font = dict(size=25)),gridcolor='rgb(230,230,230)',
-                                         tickfont =dict(size = 20)),
+                                         tickfont =dict(size = 20),range = [0,1]),
                 plot_bgcolor = 'rgb(255,255,255,0)')
         else:
             trace2D_sample_Accuracy = go.Scatter(x = sample_seq,
@@ -425,7 +386,7 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                     xaxis = go.layout.XAxis(title = go.layout.xaxis.Title(text = "Number of Samples",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                             tickfont = dict(size = 20)),
                     yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM, Bayes Accuracy Rate, Accuracy",font = dict(size=25)),gridcolor='rgb(230,230,230)',
-                                            tickfont = dict(size = 20)),
+                                            tickfont = dict(size = 20),range = [0,1]),
                     plot_bgcolor = 'rgb(255,255,255,0)')
             trace2D_feature_Accuracy = go.Scatter(x = feature_seq,
                         y = Accuracy_feature,
@@ -436,7 +397,7 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                 xaxis = go.layout.XAxis(title = go.layout.xaxis.Title(text = "Number of Features",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                         tickfont = dict(size = 20)),
                 yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM, Bayes Accuracy Rate, Accuracy",font = dict(size=25)),gridcolor='rgb(230,230,230)',
-                                        tickfont = dict(size = 20)),
+                                        tickfont = dict(size = 20),range=[0,1]),
                 plot_bgcolor = 'rgb(255,255,255,0)')
         
         if Y_continuous == False:
@@ -445,14 +406,14 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                     xaxis = go.layout.XAxis(title = go.layout.xaxis.Title(text = "Number of Samples",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                             tickfont = dict(size = 20)),
                     yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM & Bayes Accuracy Rate",font = dict(size=25)),gridcolor='rgb(230,230,230)',
-                                            tickfont = dict(size = 20)),
+                                            tickfont = dict(size = 20),range=[0,1]),
                     plot_bgcolor = 'rgb(255,255,255,0)')
             layout2D_feature_NoAccuracy = go.Layout(
                     title = go.layout.Title(x=0.5,text = 'DVM and Bayes Accuracy Rate vs. Number of Features',xanchor="center"),
                     xaxis = go.layout.XAxis(title = go.layout.xaxis.Title(text = "Number of Features",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                             tickfont = dict(size = 20)),
                     yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM & Bayes Accuracy Rate",font = dict(size=25)),gridcolor='rgb(230,230,230)',
-                                            tickfont = dict(size = 20)),
+                                            tickfont = dict(size = 20),range = [0,1]),
                     plot_bgcolor = 'rgb(255,255,255,0)')
         else:
                 layout2D_sample_NoAccuracy = go.Layout(
@@ -460,14 +421,14 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                     xaxis = go.layout.XAxis(title = go.layout.xaxis.Title(text = "Number of Samples",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                             tickfont = dict(size = 20)),
                     yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM",font = dict(size=25)),gridcolor='rgb(230,230,230)',
-                                            tickfont = dict(size = 20)),
+                                            tickfont = dict(size = 20),range = [0,1]),
                     plot_bgcolor = 'rgb(255,255,255,0)')
                 layout2D_feature_NoAccuracy = go.Layout(
                     title = go.layout.Title(x=0.5,text = 'DVM vs. Number of Features',xanchor="center"),
                     xaxis = go.layout.XAxis(title = go.layout.xaxis.Title(text = "Number of Features",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                             tickfont = dict(size = 20)),
                     yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM",font = dict(size=25)),gridcolor='rgb(230,230,230)',
-                                            tickfont = dict(size = 20)),
+                                            tickfont = dict(size = 20),range = [0,1]),
                     plot_bgcolor = 'rgb(255,255,255,0)')
        
         
@@ -489,21 +450,12 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                                               trace2D_feature_BER],
                              "layout":layout2D_feature}, auto_open=False, filename = filename + '2D_feature' + '.html')
         else:
-            if Y_continuous == True:
-                plotly.offline.plot({"data": [trace2D_sample_DVM, trace2D_sample_DVM_Lb,
-                                              trace2D_sample_DVM_Ub],
-                             "layout":layout2D_sample_NoAccuracy}, auto_open=False, filename = filename + '2D_Sample' + '.html')
-                plotly.offline.plot({"data": [trace2D_feature_DVM, trace2D_feature_DVM_Lb,
-                                              trace2D_feature_DVM_Ub],
-                             "layout":layout2D_feature_NoAccuracy}, auto_open=False, filename = filename + '2D_feature' + '.html')
-            else:
-                plotly.offline.plot({"data": [trace2D_sample_DVM, trace2D_sample_DVM_Lb,
-                                              trace2D_sample_DVM_Ub,trace2D_sample_BER],
-                             "layout":layout2D_sample_NoAccuracy}, auto_open=False, filename = filename + '2D_Sample' + '.html')
-                plotly.offline.plot({"data": [trace2D_feature_DVM, trace2D_feature_DVM_Lb,
-                                              trace2D_feature_DVM_Ub,trace2D_feature_BER],
-                             "layout":layout2D_feature_NoAccuracy}, auto_open=False, filename = filename + '2D_feature' + '.html')
-
+            plotly.offline.plot({"data": [trace2D_sample_DVM, trace2D_sample_DVM_Lb,
+                                          trace2D_sample_DVM_Ub],
+                         "layout":layout2D_sample_NoAccuracy}, auto_open=False, filename = filename + '2D_Sample' + '.html')
+            plotly.offline.plot({"data": [trace2D_feature_DVM, trace2D_feature_DVM_Lb,
+                                          trace2D_feature_DVM_Ub],
+                         "layout":layout2D_feature_NoAccuracy}, auto_open=False, filename = filename + '2D_feature' + '.html')
         return {"Accuracy_sample":Accuracy_sample,"Accuracy_feature":Accuracy_feature,
                 "MI_sample":MI_sample,"MI_feature":MI_feature,
                 "Complexity_sample" : Complexity_sample,"Complexity_feature":Complexity_feature,
@@ -561,8 +513,8 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                 I1_matrix[MI_row_id, MI_col_id] = result["I1"]
                 I2_matrix[MI_row_id, MI_col_id] = result["I2"]
                 I3_matrix[MI_row_id, MI_col_id] = result["I3"]
-                Ub_DVM[MI_row_id, MI_col_id] = result["Upper Std"]
-                Lb_DVM[MI_row_id, MI_col_id] = result["Lower Std"] 
+                Ub_DVM[MI_row_id, MI_col_id] = result["Upper Percentile"]
+                Lb_DVM[MI_row_id, MI_col_id] = result["Lower Percentile"] 
                 
                 MI_col_id += 1
             MI_row_id += 1
@@ -571,52 +523,14 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
         DVM_value = sp.ndimage.filters.gaussian_filter(DVM_value, sigma, mode='constant')
         Accuracy = sp.ndimage.filters.gaussian_filter(Accuracy, sigma, mode='constant')
         
-        if smooth%2:
-            num1 = (smooth - 1)/2
-            num2 = (smooth - 1)/2
-        else:
-            num1 = smooth/2 - 1
-            num2 = smooth/2
-            
-        id1_sample = np.arange(num1)
-        id2_sample = sample_len - 1 - np.arange(num2)
-        id2_sample = id2_sample[::-1]
-        id1_sample = id1_sample.astype(int)
-        id2_sample = id2_sample.astype(int)
         
-        DVM_value_sample_smooth = np.convolve(DVM_value[:,-1], np.ones((smooth,))/smooth, mode='valid')
-        Ub_sample_smooth = np.convolve(Ub_DVM[:,-1], np.ones((smooth,))/smooth, mode='valid')
-        Lb_sample_smooth = np.convolve(Lb_DVM[:,-1], np.ones((smooth,))/smooth, mode='valid')
+        DVM_value_sample = savgol_filter(DVM_value[:,-1], window_len, polyorder)
+        Ub_sample = savgol_filter(Ub_DVM[:,-1], window_len, polyorder)
+        Lb_sample = savgol_filter(Ub_DVM[:,-1], window_len, polyorder)
         
-        DVM_value_sample = np.concatenate((DVM_value[id1_sample,-1],
-                                           DVM_value_sample_smooth,
-                                           DVM_value[id2_sample,-1]))
-        Ub_sample = np.concatenate((Ub_DVM[id1_sample,-1],
-                                    Ub_sample_smooth,
-                                    Ub_DVM[id2_sample,-1]))
-        Lb_sample = np.concatenate((Lb_DVM[id1_sample,-1],
-                                    Lb_sample_smooth,
-                                    Lb_DVM[id2_sample,-1]))
-        
-        id1_feature = np.arange(num1)
-        id2_feature = feature_len - 1 - np.arange(num2)
-        id2_feature = id2_feature[::-1]
-        id1_feature = id1_feature.astype(int)
-        id2_feature = id2_feature.astype(int)
-        
-        DVM_value_feature_smooth = np.convolve(DVM_value[-1,:], np.ones((smooth,))/smooth, mode='valid')
-        Ub_feature_smooth = np.convolve(Ub_DVM[-1,:], np.ones((smooth,))/smooth, mode='valid')
-        Lb_feature_smooth = np.convolve(Lb_DVM[-1,:], np.ones((smooth,))/smooth, mode='valid')
-        
-        DVM_value_feature = np.concatenate((DVM_value[-1,id1_feature],
-                                           DVM_value_feature_smooth,
-                                           DVM_value[-1,id2_feature]))
-        Ub_feature = np.concatenate((Ub_DVM[-1,id1_feature],
-                                    Ub_feature_smooth,
-                                    Ub_DVM[-1,id2_feature]))
-        Lb_feature = np.concatenate((Lb_DVM[-1,id1_feature],
-                                    Lb_feature_smooth,
-                                    Lb_DVM[-1,id2_feature]))
+        DVM_value_feature = savgol_filter(DVM_value[-1,:], window_len, polyorder)
+        Ub_feature = savgol_filter(Ub_DVM[-1,:], window_len, polyorder)
+        Lb_feature = savgol_filter(Ub_DVM[-1,:], window_len, polyorder)
         
         if Y_continuous == True:
             Accuracy = Accuracy/np.max(Accuracy)
@@ -662,7 +576,7 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                     xaxis = go.layout.XAxis(title = go.layout.xaxis.Title(text = "Number of Samples",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                             tickfont = dict(size = 20)),
                     yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM & MSE",font = dict(size=25)),gridcolor='rgb(230,230,230)',
-                                            tickfont = dict(size = 20)),
+                                            tickfont = dict(size = 20),range=[0,1]),
                     plot_bgcolor = 'rgb(255,255,255,0)')
             trace2D_feature_Accuracy = go.Scatter(x = feature_seq,
                         y = Accuracy[-1,:],
@@ -673,7 +587,7 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                 xaxis = go.layout.XAxis(title = go.layout.xaxis.Title(text = "Number of Features",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                         tickfont = dict(size = 20)),
                 yaxis =  go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM & MSE",font = dict(size=25)),gridcolor='rgb(230,230,230)',
-                                         tickfont = dict(size = 20)),
+                                         tickfont = dict(size = 20),range=[0,1]),
                 plot_bgcolor = 'rgb(255,255,255,0)')
         else:
             feature_seq_v,sample_seq_v = np.meshgrid(feature_seq,sample_seq)
@@ -707,7 +621,7 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                     xaxis = go.layout.XAxis(title = go.layout.xaxis.Title(text = "Number of Samples",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                             tickfont = dict(size = 20)),
                     yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM, Bayes Accuracy Rate, Accuracy",font = dict(size=25)),gridcolor='rgb(230,230,230)',
-                                            tickfont = dict(size = 20)),
+                                            tickfont = dict(size = 20),range=[0,1]),
                     plot_bgcolor = 'rgb(255,255,255,0)')
             trace2D_feature_Accuracy = go.Scatter(x = feature_seq,
                         y = Accuracy[-1,:],
@@ -722,7 +636,7 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                 xaxis = go.layout.XAxis(title = go.layout.xaxis.Title(text = "Number of Features",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                         tickfont = dict(size = 20)),
                 yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM, Bayes Accuracy Rate, Accuracy",font = dict(size=25)),gridcolor='rgb(230,230,230)',
-                                        tickfont = dict(size = 20)),
+                                        tickfont = dict(size = 20),range = [0,1]),
                 plot_bgcolor = 'rgb(255,255,255,0)')
 
             
@@ -754,7 +668,7 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                         mode = 'lines',
                         name = 'DVM')
         trace2D_sample_DVM_Ub = go.Scatter(x = sample_seq,
-                                       y = DVM_value_sample + Ub_sample,
+                                       y = Ub_sample,
                                        name = "95% CI Upper",
                                        mode = 'lines',
                                        marker=dict(color="#444"),
@@ -764,7 +678,7 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                                        showlegend=False)
         
         trace2D_sample_DVM_Lb = go.Scatter(x = sample_seq,
-                                       y = DVM_value_sample - Lb_sample,
+                                       y = Lb_sample,
                                        name = "95% CI Lower",
                                        mode = 'lines',
                                        marker=dict(color="#444"),
@@ -772,7 +686,7 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                                        showlegend=False)
         
         trace2D_feature_DVM_Ub = go.Scatter(x = feature_seq,
-                                       y = DVM_value_feature + Ub_feature,
+                                       y = Ub_feature,
                                        name = "95% CI Upper",
                                        mode = 'lines',
                                        marker=dict(color="#444"),
@@ -782,7 +696,7 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                                        showlegend=False)
         
         trace2D_feature_DVM_Lb = go.Scatter(x = feature_seq,
-                                       y = DVM_value_feature - Lb_feature,
+                                       y = Lb_feature,
                                        name = "95% CI Lower",
                                        mode = 'lines',
                                        marker=dict(color="#444"),
@@ -800,34 +714,34 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                 xaxis = go.layout.XAxis(title = go.layout.xaxis.Title(text = "Number of Samples",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                         tickfont = dict(size = 20)),
                 yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM",font = dict(size=25)),gridcolor='rgb(230,230,230)',
-                                        tickfont = dict(size = 20)),
+                                        tickfont = dict(size = 20),range=[0,1]),
                 plot_bgcolor = 'rgb(255,255,255,0)')
             layout2D_feature_NoAccuracy = go.Layout(
                 title = go.layout.Title(x=0.5,text = 'DVM vs. Feature Number',xanchor="center"),
                 xaxis = go.layout.XAxis(title = go.layout.xaxis.Title(text = "Number of Features",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                         tickfont = dict(size = 20)),
                 yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM",font = dict(size=25)),gridcolor='rgb(230,230,230)',
-                                        tickfont = dict(size = 20)),
+                                        tickfont = dict(size = 20),range=[0,1]),
                 plot_bgcolor = 'rgb(255,255,255,0)')
         else:
             layout3D_NoAccuracy = go.Layout(
                     scene = dict (
                     xaxis = dict(title = "Number of Features",titlefont=dict(size=17),gridcolor='rgb(230, 230, 230)',backgroundcolor='rgb(255, 255,255)'),
                     yaxis = dict(title = "Number of Samples",titlefont=dict(size=17),gridcolor='rgb(230, 230, 230)',backgroundcolor='rgb(255, 255,255)'),
-                    zaxis = dict(title = "DVM & Bayes Accuracy Rate",titlefont = dict(size=17),gridcolor='rgb(230, 230, 230)',backgroundcolor='rgb(255, 255,255)'),),)
+                    zaxis = dict(title = "DVM",titlefont = dict(size=17),gridcolor='rgb(230, 230, 230)',backgroundcolor='rgb(255, 255,255)'),),)
             layout2D_sample_NoAccuracy = go.Layout(
-                title = go.layout.Title(x=0.5,text = 'DVM and Bayes Accuracy Rate vs. Number of Samples',xanchor="center"),
+                title = go.layout.Title(x=0.5,text = 'DVM vs. Number of Samples',xanchor="center"),
                 xaxis = go.layout.XAxis(title = go.layout.xaxis.Title(text = "Number of Samples",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                         tickfont = dict(size = 20)),
                 yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM & Bayes Accuracy Rate",font = dict(size=25)),gridcolor='rgb(230,230,230)',
-                                        tickfont = dict(size = 20)),
+                                        tickfont = dict(size = 20),range = [0,1]),
                 plot_bgcolor = 'rgb(255,255,255,0)')
             layout2D_feature_NoAccuracy = go.Layout(
-                title = go.layout.Title(x=0.5,text = 'DVM and Bayes Accuracy Rate vs. Feature Number',xanchor="center"),
+                title = go.layout.Title(x=0.5,text = 'DVM vs. Feature Number',xanchor="center"),
                 xaxis = go.layout.XAxis(title = go.layout.xaxis.Title(text = "Number of Features",font = dict(size=25)),gridcolor='rgb(230,230,230)',
                                         tickfont = dict(size = 20)),
                 yaxis = go.layout.YAxis(title = go.layout.yaxis.Title(text = "DVM & Bayes Accuracy Rate",font = dict(size=25)),gridcolor='rgb(230,230,230)',
-                                        tickfont = dict(size = 20)),
+                                        tickfont = dict(size = 20),range = [0,1]),
                 plot_bgcolor = 'rgb(255,255,255,0)')
 
         
@@ -840,12 +754,8 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                     plotly.offline.plot({"data": [trace3D_DVM,trace3D_Accuracy,trace3D_BER],"layout":layout3D}, 
                                  auto_open=False, filename = filename + '3D'+'.html')
             else:
-                if Y_continuous == True:
-                    plotly.offline.plot({"data": [trace3D_DVM],"layout":layout3D_NoAccuracy}, 
-                                 auto_open=False, filename = filename + '3D'+'.html')
-                else:
-                    plotly.offline.plot({"data": [trace3D_DVM,trace3D_BER],"layout":layout3D_NoAccuracy}, 
-                                 auto_open=False, filename = filename + '3D'+'.html')
+                plotly.offline.plot({"data": [trace3D_DVM],"layout":layout3D_NoAccuracy}, 
+                             auto_open=False, filename = filename + '3D'+'.html')
         if plot_type == 'Both':
             if GiveAccuracy:
                 if Y_continuous == True:
@@ -868,25 +778,14 @@ def plot_DVM(X, Y=None, X_continuous = False,Y_continuous = False,
                                                   trace2D_feature_DVM_Ub,trace2D_feature_Accuracy,trace2D_feature_BER],
                                          "layout":layout2D_feature}, auto_open=False, filename = filename + '2D_feature' + '.html')
             else:
-                if Y_continuous == True:
-                    plotly.offline.plot({"data": [trace3D_DVM],"layout":layout3D_NoAccuracy}, 
-                                         auto_open=False, filename = filename + '3D'+'.html')
-                    plotly.offline.plot({"data": [trace2D_sample_DVM,trace2D_sample_DVM_Lb,
-                                                  trace2D_sample_DVM_Ub],
-                                         "layout":layout2D_sample_NoAccuracy}, auto_open=False, filename = filename + '2D_Sample' + '.html')
-                    plotly.offline.plot({"data": [trace2D_feature_DVM,trace2D_feature_DVM_Lb,
-                                                  trace2D_feature_DVM_Ub],
-                                         "layout":layout2D_feature_NoAccuracy}, auto_open=False, filename = filename + '2D_feature' + '.html') 
-                else:
-                    plotly.offline.plot({"data": [trace3D_DVM,trace3D_BER],"layout":layout3D_NoAccuracy}, 
-                                         auto_open=False, filename = filename + '3D'+'.html')
-                    plotly.offline.plot({"data": [trace2D_sample_DVM,trace2D_sample_DVM_Lb,
-                                                  trace2D_sample_DVM_Ub,trace2D_sample_BER],
-                                         "layout":layout2D_sample_NoAccuracy}, auto_open=False, filename = filename + '2D_Sample' + '.html')
-                    plotly.offline.plot({"data": [trace2D_feature_DVM,trace2D_feature_DVM_Lb,
-                                                  trace2D_feature_DVM_Ub,trace2D_feature_BER],
-                                         "layout":layout2D_feature_NoAccuracy}, auto_open=False, filename = filename + '2D_feature' + '.html') 
-
+                plotly.offline.plot({"data": [trace3D_DVM],"layout":layout3D_NoAccuracy}, 
+                                     auto_open=False, filename = filename + '3D'+'.html')
+                plotly.offline.plot({"data": [trace2D_sample_DVM,trace2D_sample_DVM_Lb,
+                                              trace2D_sample_DVM_Ub],
+                                     "layout":layout2D_sample_NoAccuracy}, auto_open=False, filename = filename + '2D_Sample' + '.html')
+                plotly.offline.plot({"data": [trace2D_feature_DVM,trace2D_feature_DVM_Lb,
+                                              trace2D_feature_DVM_Ub],
+                                     "layout":layout2D_feature_NoAccuracy}, auto_open=False, filename = filename + '2D_feature' + '.html') 
         return {"Accuracy":Accuracy,"MI":MI,"Complexity" : Complexity,"DVM":DVM_value,
                 "Sample Number":sample_seq, "Feature Number":feature_seq,
                 "Confidence band":confidence_band,"I1":I1_matrix,"I2":I2_matrix,"I3":I3_matrix,
